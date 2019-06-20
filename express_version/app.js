@@ -1,45 +1,8 @@
 const express = require('express')
 const app = express()
 const port = 3000
-const Sequelize = require('sequelize');
-
-const sequelize = new Sequelize('music', 'crawler', '123456', {
-  host: 'localhost',
-  dialect: 'mysql',/* one of 'mysql' | 'mariadb' | 'postgres' | 'mssql' */
-  define: {
-    freezeTableName: true
-  }
-});
-
-const Album = sequelize.define('album', {
-  imgSrc: {
-    type: Sequelize.STRING
-  },
-  titleCn: {
-    type: Sequelize.STRING
-  },
-  titleEn: {
-    type: Sequelize.STRING
-  },
-})
-
-const Song = sequelize.define('song', {
-  highUrl: {
-    type: Sequelize.STRING
-  },
-  lowUrl: {
-    type: Sequelize.STRING
-  },
-  subTitle: {
-    type: Sequelize.STRING
-  },
-  serial: {
-    type: Sequelize.INTEGER
-  },
-  album_id: {
-    type: Sequelize.INTEGER
-  },
-})
+const Album = require('./model').Album;
+const Song = require('./model').Song;
 
 app.get('/', (req, res) => {
   let albums = Album.findAll(
