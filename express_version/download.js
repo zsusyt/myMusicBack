@@ -19,10 +19,11 @@ let pSong = Song.findAll(
   }
 )
 
-function download(url, filePath, callback) {
+function download(url, filePath, callback, downloadOne) {
   fs.exists(filePath, function (exists) {
     if(exists) {
       console.log(chalk.yellow('% ') + chalk.white(filePath) + chalk.yellow(' 已存在，不再下载'));
+      downloadOne()
     } else {
       var stream = fs.createWriteStream(filePath);
       request(url).pipe(stream).on('close', callback);
@@ -50,27 +51,37 @@ Promise.all([pAlbum, pSong])
     result = result.concat(item.songs);
   })
 
-  let tempRe = result.slice(0,10);
+  let tempRe = result.slice(0,100);
 
-  for(let item of tempRe) {
-    let dirPath = item.filePath.split('/').slice(0, -1).join('/');
+  function downloadOne() {
+    setTimeout( ()=>{
+      if(tempRe.length > 0) {
+        let item = tempRe.pop();
+        let dirPath = item.filePath.split('/').slice(0, -1).join('/');
 
-    fs.exists(dirPath, function (exists) {
-      if(exists) {
-        download(item.url, item.filePath, function () {
-          console.log(chalk.green('✓ ') + chalk.yellow('下载 ') + chalk.blue(item.filePath) + chalk.green(' 成功!'));
-        })
+        fs.exists(dirPath, function (exists) {
+          if(exists) {
+            download(item.url, item.filePath, function () {
+              console.log(chalk.green('✓ ') + chalk.yellow('下载 ') + chalk.blue(item.filePath) + chalk.green(' 成功!'));
+              downloadOne();
+            }, downloadOne)
+          } else {
+            fs.mkdir(dirPath, {recursive: true}, (err)=>{
+              if(err) console.log(err)
+              download(item.url, item.filePath, function () {
+                console.log(chalk.green('✓ ') + chalk.yellow('下载 ') + chalk.blue(item.filePath) + chalk.green(' 成功!'));
+                downloadOne();
+              }, downloadOne)
+            })
+
+          };
+        });
       } else {
-        fs.mkdir(dirPath, {recursive: true}, (err)=>{
-          if(err) console.log(err)
-          download(item.url, item.filePath, function () {
-            console.log(chalk.green('✓ ') + chalk.yellow('下载 ') + chalk.blue(item.filePath) + chalk.green(' 成功!'));
-          })
-        })
-
-      };
-    });
-
+        console.log(chalk.green('✓✓✓ ') + chalk.yellow('全部下载完成 '));
+      }
+    }, 2000)
   }
+
+  downloadOne();
   // fs.writeFileSync('album.json', JSON.stringify(tempRe))
 })
